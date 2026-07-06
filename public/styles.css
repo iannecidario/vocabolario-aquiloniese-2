@@ -71,6 +71,13 @@ h1 {
   font-weight: 650;
 }
 
+.voice-credit {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: clamp(0.86rem, 1.1vw, 1rem);
+  font-weight: 560;
+}
+
 .search,
 .filters label {
   display: grid;
