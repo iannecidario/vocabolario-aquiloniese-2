@@ -45,3 +45,19 @@ AIRTABLE_VIEW_NAME
 
 Non caricare mai `.env` su GitHub.
 
+
+## Modalita embed iframe
+
+La modalita incorporata si apre con:
+
+```text
+https://vocabolario-aquiloniese-2.pages.dev/?embed=true
+```
+
+Prima di pubblicare su un sito esterno, modifica `public/_headers` sostituendo:
+
+```text
+https://www.DOMINIO-AUTORIZZATO.it
+```
+
+con il dominio reale autorizzato a incorporare il vocabolario.

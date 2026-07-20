@@ -21,6 +21,44 @@ const detailExtra = document.querySelector("#detailExtra");
 const detailTags = document.querySelector("#detailTags");
 const detailPlay = document.querySelector("#detailPlay");
 const detailAudio = document.querySelector("#detailAudio");
+const embedParam = new URLSearchParams(window.location.search).get("embed");
+const isEmbedMode = embedParam === "true" || window.location.pathname.replace(/\/+$/, "") === "/embed";
+const resizeMessageType = "VOCABOLARIO_RESIZE";
+let resizeFrame = 0;
+
+if (isEmbedMode) {
+  document.documentElement.classList.add("embed-mode");
+  document.body.classList.add("embed-mode");
+}
+
+function getEmbedHeight() {
+  const body = document.body;
+  const html = document.documentElement;
+  return Math.ceil(Math.max(
+    body.scrollHeight,
+    body.offsetHeight,
+    html.clientHeight,
+    html.scrollHeight,
+    html.offsetHeight
+  ));
+}
+
+function postEmbedHeight() {
+  if (!isEmbedMode || !window.parent || window.parent === window) return;
+  window.parent.postMessage({
+    type: resizeMessageType,
+    height: getEmbedHeight()
+  }, "*");
+}
+
+function scheduleEmbedResize() {
+  if (!isEmbedMode) return;
+  window.cancelAnimationFrame(resizeFrame);
+  resizeFrame = window.requestAnimationFrame(() => {
+    postEmbedHeight();
+    window.setTimeout(postEmbedHeight, 120);
+  });
+}
 
 let vocabulary = [];
 let currentAudio = null;
@@ -46,6 +84,7 @@ function normalizeText(value) {
 function setStatus(message, isError = false) {
   statusEl.textContent = message;
   statusEl.classList.toggle("error", isError);
+  scheduleEmbedResize();
 }
 
 function uniqueOptions(items, key) {
@@ -179,6 +218,7 @@ function closeDetail() {
   delete detailAudio.dataset.type;
   detailPlay.dataset.state = "idle";
   document.body.classList.remove("detail-open");
+  scheduleEmbedResize();
 }
 
 function openDetail(item) {
@@ -237,6 +277,7 @@ function openDetail(item) {
 
   detailOverlay.hidden = false;
   document.body.classList.add("detail-open");
+  scheduleEmbedResize();
 }
 
 function playAudio(audio, play, source) {
@@ -355,6 +396,7 @@ function render() {
   const visible = items.length;
   loadMore.hidden = visible >= shown;
   setStatus(total ? `${visible} di ${shown} voci` : "Nessuna voce trovata.");
+  scheduleEmbedResize();
 }
 
 async function loadVocabulary() {
@@ -450,6 +492,16 @@ detailAudio.addEventListener("ended", () => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !detailOverlay.hidden) closeDetail();
 });
+
+if (isEmbedMode) {
+  window.addEventListener("load", scheduleEmbedResize);
+  window.addEventListener("resize", scheduleEmbedResize);
+  if ("ResizeObserver" in window) {
+    const resizeObserver = new ResizeObserver(scheduleEmbedResize);
+    resizeObserver.observe(document.body);
+    resizeObserver.observe(document.documentElement);
+  }
+}
 
 buildAlphabetBar();
 loadVocabulary();
