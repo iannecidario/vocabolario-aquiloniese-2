@@ -60,43 +60,57 @@
           <p class="subtitle">Beniamino Tartaglia - Dario Ianneci</p>
           <p class="voice-credit">voci: Vito Coppola e Alessandro Annunziata</p>
         </div>
-        <label class="search">
-          <span>Cerca</span>
-          <input id="searchInput" type="search" placeholder="Lemma, italiano, inglese..." autocomplete="off" />
-        </label>
+        <div class="search-actions">
+          <label class="search">
+            <span>Cerca</span>
+            <input id="searchInput" type="search" placeholder="Lemma, italiano, inglese..." autocomplete="off" />
+          </label>
+          <button class="locutions-button" id="openLocutions" type="button">Locuzioni</button>
+        </div>
       </section>
 
-      <nav class="alphabet-nav" aria-label="Filtro alfabetico per lemma">
-        <button class="alpha-button is-active" type="button" data-letter="">Tutte</button>
-        <div class="alphabet-bar" id="alphabetBar"></div>
-      </nav>
+      <div id="dictionaryView">
+        <nav class="alphabet-nav" aria-label="Filtro alfabetico per lemma">
+          <button class="alpha-button is-active" type="button" data-letter="">Tutte</button>
+          <div class="alphabet-bar" id="alphabetBar"></div>
+        </nav>
 
-      <section class="filters" aria-label="Filtri">
-        <label>
-          Italiano
-          <input id="italianFilter" type="search" placeholder="Filtra significato..." autocomplete="off" />
-        </label>
-        <label>
-          Inglese
-          <input id="englishFilter" type="search" placeholder="Filter English..." autocomplete="off" />
-        </label>
-        <label>
-          Campi semantici
-          <select id="semanticFilter">
-            <option value="">Tutte</option>
-          </select>
-        </label>
-        <button id="clearFilters" type="button">Azzera</button>
+        <section class="filters" aria-label="Filtri">
+          <label>
+            Italiano
+            <input id="italianFilter" type="search" placeholder="Filtra significato..." autocomplete="off" />
+          </label>
+          <label>
+            Inglese
+            <input id="englishFilter" type="search" placeholder="Filter English..." autocomplete="off" />
+          </label>
+          <label>
+            Campi semantici
+            <select id="semanticFilter">
+              <option value="">Tutte</option>
+            </select>
+          </label>
+          <button id="clearFilters" type="button">Azzera</button>
+        </section>
+
+        <section class="semantic-active" id="semanticActive" hidden aria-live="polite">
+          <span>Campo semantico attivo: <strong id="semanticActiveLabel"></strong></span>
+          <button id="clearSemanticFilter" type="button">× Rimuovi filtro</button>
+        </section>
+
+        <section class="status" id="status" role="status">Caricamento da Airtable...</section>
+        <section class="word-grid" id="wordGrid" aria-label="Lista parole"></section>
+        <button class="load-more" id="loadMore" type="button" hidden>Carica altri</button>
+      </div>
+
+      <section class="locutions-view" id="locutionsView" hidden aria-labelledby="locutionsTitle">
+        <header class="locutions-view__head">
+          <h2 id="locutionsTitle">Locuzioni e modi di dire</h2>
+          <button class="locutions-back" id="closeLocutions" type="button">Vocabolario</button>
+        </header>
+        <p class="status" id="locutionsStatus" role="status"></p>
+        <div class="locutions-repertory" id="locutionsList"></div>
       </section>
-
-      <section class="semantic-active" id="semanticActive" hidden aria-live="polite">
-        <span>Campo semantico attivo: <strong id="semanticActiveLabel"></strong></span>
-        <button id="clearSemanticFilter" type="button">× Rimuovi filtro</button>
-      </section>
-
-      <section class="status" id="status" role="status">Caricamento da Airtable...</section>
-      <section class="word-grid" id="wordGrid" aria-label="Lista parole"></section>
-      <button class="load-more" id="loadMore" type="button" hidden>Carica altri</button>
     </main>
 
     <section class="detail-overlay" id="detailOverlay" hidden aria-label="Dettaglio vocabolo">
