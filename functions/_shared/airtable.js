@@ -135,7 +135,7 @@ function inferFieldMap(env, table, schema) {
     language: overrides.language || findField(fields, ["language", "lingua", "lang"], optionTypes)?.name || "Language",
     category: overrides.category || findField(fields, ["category", "categoria", "type", "tipo", "classe", "gruppo"], optionTypes)?.name || "Category",
     audio: audioField,
-    locution: overrides.locution || findField(fields, ["locuzioni"], lookupTypes)?.name || findLookupFromLocutions(fields, schema, ["locuzione"])?.name || findLocutionLookup(fields)?.name || "Locuzione",
+    locution: overrides.locution || findField(fields, ["locuzione_lookup", "locuzione lookup"], lookupTypes)?.name || findLookupFromLocutions(fields, schema, ["locuzione", "locuzioni e modi di dire"])?.name || findLocutionLookup(fields)?.name || "Locuzione_lookup",
     locutionMeaning: overrides.locutionMeaning || findField(fields, ["significato_locuzione", "significato locuzione"], lookupTypes)?.name || findLookupFromLocutions(fields, schema, ["significato", "meaning"])?.name || findLocutionLookup(fields, true)?.name || "Significato locuzione"
   };
 }
