@@ -445,6 +445,28 @@ button.tag:focus-visible,
   line-height: 1.5;
 }
 
+.locution-list {
+  display: grid;
+  gap: 12px;
+}
+
+.locution-item {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.locution-item .locution-item__text {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.locution-item .locution-item__meaning {
+  color: var(--muted);
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
 .detail-images {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

@@ -12,6 +12,7 @@ const semanticActive = document.querySelector("#semanticActive");
 const semanticActiveLabel = document.querySelector("#semanticActiveLabel");
 const clearSemanticFilter = document.querySelector("#clearSemanticFilter");
 const detailOverlay = document.querySelector("#detailOverlay");
+const detailCard = document.querySelector("#detailCard");
 const detailClose = document.querySelector("#detailClose");
 const detailWord = document.querySelector("#detailWord");
 const detailPhonetic = document.querySelector("#detailPhonetic");
@@ -202,6 +203,40 @@ function makeDetailRow(label, value) {
   return row;
 }
 
+function makeLocutionsSection(locutions) {
+  const items = (Array.isArray(locutions) ? locutions : []).filter((item) => clean(item?.locution));
+  if (!items.length) return null;
+
+  const section = document.createElement("section");
+  section.className = "detail-row detail-locutions";
+  const title = document.createElement("h3");
+  title.textContent = "Locuzioni";
+  const list = document.createElement("div");
+  list.className = "locution-list";
+
+  items.forEach((item) => {
+    const entry = document.createElement("div");
+    entry.className = "locution-item";
+    // Contenitore separato, pronto per un futuro collegamento interno al lemma.
+    const locution = document.createElement("p");
+    locution.className = "locution-item__text";
+    locution.textContent = clean(item.locution);
+    entry.append(locution);
+
+    const meaningText = clean(item.meaning);
+    if (meaningText) {
+      const meaning = document.createElement("p");
+      meaning.className = "locution-item__meaning";
+      meaning.textContent = meaningText;
+      entry.append(meaning);
+    }
+    list.append(entry);
+  });
+
+  section.append(title, list);
+  return section;
+}
+
 function localAudioSource(item, audio) {
   if (!item?.id || !audio?.id) return null;
   return {
@@ -230,6 +265,7 @@ function openDetail(item) {
   setElementText(detailEnglish, item.english);
   detailExtra.replaceChildren();
   detailTags.replaceChildren();
+  detailCard.querySelector(".detail-locutions")?.remove();
 
   const firstAudio = localAudioSource(item, item.audio?.[0]);
   if (firstAudio) {
@@ -274,6 +310,9 @@ function openDetail(item) {
   });
   if (clean(item.language)) detailTags.append(makeTag(item.language));
   if (clean(item.category)) detailTags.append(makeTag(item.category, "category"));
+
+  const locutionsSection = makeLocutionsSection(item.locutions);
+  if (locutionsSection) detailCard.insertBefore(locutionsSection, detailAudio);
 
   detailOverlay.hidden = false;
   document.body.classList.add("detail-open");

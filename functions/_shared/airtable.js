@@ -26,7 +26,9 @@ function readFieldOverrides(env) {
     image: env.AIRTABLE_IMAGE_FIELD,
     language: env.AIRTABLE_LANGUAGE_FIELD,
     category: env.AIRTABLE_CATEGORY_FIELD,
-    audio: env.AIRTABLE_AUDIO_FIELD
+    audio: env.AIRTABLE_AUDIO_FIELD,
+    locution: env.AIRTABLE_LOCUTION_FIELD,
+    locutionMeaning: env.AIRTABLE_LOCUTION_MEANING_FIELD
   };
 }
 
@@ -43,7 +45,9 @@ function defaultFieldMap(env) {
     image: overrides.image || "Immagine",
     language: overrides.language || "Language",
     category: overrides.category || "Category",
-    audio: overrides.audio || "Audio"
+    audio: overrides.audio || "Audio",
+    locution: overrides.locution || "Locuzione",
+    locutionMeaning: overrides.locutionMeaning || "Significato locuzione"
   };
 }
 
@@ -68,6 +72,24 @@ function findField(fields, candidates, types = []) {
   );
 }
 
+function findLocutionLookup(fields, meaning = false) {
+  const lookups = fields.filter((field) => ["multipleLookupValues", "lookup", "formula", "rollup"].includes(field.type));
+  return lookups.find((field) => {
+    const name = normalizeName(field.name);
+    const isLocution = name.includes("locuz");
+    const isMeaning = name.includes("significat") || name.includes("meaning");
+    return isLocution && isMeaning === meaning;
+  }) || null;
+}
+
+function findLookupFromLocutions(fields, schema, sourceNames) {
+  const locutionsTable = (schema?.tables || []).find((table) => normalizeName(table.name).includes("locuzion"));
+  if (!locutionsTable) return null;
+  const sourceField = findField(locutionsTable.fields || [], sourceNames);
+  if (!sourceField) return null;
+  return fields.find((field) => field.type === "multipleLookupValues" && field.options?.fieldId === sourceField.id) || null;
+}
+
 async function fetchSchema(config) {
   const response = await fetch(`https://api.airtable.com/v0/meta/bases/${config.baseId}/tables`, {
     headers: {
@@ -88,11 +110,12 @@ async function fetchSchema(config) {
   return response.json();
 }
 
-function inferFieldMap(env, table) {
+function inferFieldMap(env, table, schema) {
   const overrides = readFieldOverrides(env);
   const fields = table.fields || [];
   const textTypes = ["singleLineText", "multilineText", "richText", "email", "url", "phoneNumber", "formula"];
   const optionTypes = ["singleSelect", "multipleSelects", "singleLineText", "formula"];
+  const lookupTypes = ["multipleLookupValues", "lookup", "formula", "rollup"];
   const audioField =
     overrides.audio ||
     findField(fields, ["audio", "mp3", "suono", "sound", "pronuncia audio", "file audio"], ["multipleAttachments"])?.name ||
@@ -111,7 +134,9 @@ function inferFieldMap(env, table) {
     image: overrides.image || findField(fields, ["image", "immagine", "foto", "picture"], ["multipleAttachments"])?.name || "Immagine",
     language: overrides.language || findField(fields, ["language", "lingua", "lang"], optionTypes)?.name || "Language",
     category: overrides.category || findField(fields, ["category", "categoria", "type", "tipo", "classe", "gruppo"], optionTypes)?.name || "Category",
-    audio: audioField
+    audio: audioField,
+    locution: overrides.locution || findLookupFromLocutions(fields, schema, ["locuzione"])?.name || findLocutionLookup(fields)?.name || findField(fields, ["locuzioni", "locuzione"], lookupTypes)?.name || "Locuzione",
+    locutionMeaning: overrides.locutionMeaning || findLookupFromLocutions(fields, schema, ["significato", "meaning"])?.name || findLocutionLookup(fields, true)?.name || findField(fields, ["significati locuzioni", "significato locuzioni", "significato locuzione"], lookupTypes)?.name || "Significato locuzione"
   };
 }
 
@@ -134,7 +159,7 @@ async function resolveAirtableConfig(env, config) {
       const schema = await fetchSchema(config);
       const table = pickVocabularyTable(schema.tables || [], config.tableName);
       if (table) {
-        const fieldMap = defaultFieldMap(env);
+        const fieldMap = inferFieldMap(env, table, schema);
         return {
           tableName: config.tableName,
           tableLabel: table.name,
@@ -163,7 +188,7 @@ async function resolveAirtableConfig(env, config) {
     throw error;
   }
 
-  const fieldMap = inferFieldMap(env, table);
+  const fieldMap = inferFieldMap(env, table, schema);
   return {
     tableName: table.id,
     tableLabel: table.name,
@@ -211,6 +236,21 @@ function fieldValueToText(value, lookup = {}) {
   return value || "";
 }
 
+function lookupValues(value) {
+  const values = Array.isArray(value) ? value : value === undefined || value === null ? [] : [value];
+  return values.map((item) => String(item || "").trim());
+}
+
+function normalizeLocutions(fields, fieldMap) {
+  const locutions = lookupValues(fields[fieldMap.locution]);
+  const meanings = lookupValues(fields[fieldMap.locutionMeaning]);
+
+  return locutions.reduce((items, locution, index) => {
+    if (locution) items.push({ locution, meaning: meanings[index] || "" });
+    return items;
+  }, []);
+}
+
 function normalizeRecord(record, fieldMap, linkedLookups = {}) {
   const fields = record.fields || {};
   const attachments = Array.isArray(fields[fieldMap.audio]) ? fields[fieldMap.audio] : [];
@@ -230,6 +270,7 @@ function normalizeRecord(record, fieldMap, linkedLookups = {}) {
     images,
     language: fieldValueToText(fields[fieldMap.language]),
     category: fieldValueToText(fields[fieldMap.category]),
+    locutions: normalizeLocutions(fields, fieldMap),
     audio,
     updatedAt: record.createdTime || null
   };
@@ -330,4 +371,3 @@ async function fetchVocabularyFromAirtable(env) {
     config: resolvedConfig
   };
 }
-
