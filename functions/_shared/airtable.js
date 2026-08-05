@@ -135,8 +135,8 @@ function inferFieldMap(env, table, schema) {
     language: overrides.language || findField(fields, ["language", "lingua", "lang"], optionTypes)?.name || "Language",
     category: overrides.category || findField(fields, ["category", "categoria", "type", "tipo", "classe", "gruppo"], optionTypes)?.name || "Category",
     audio: audioField,
-    locution: overrides.locution || findLookupFromLocutions(fields, schema, ["locuzione"])?.name || findLocutionLookup(fields)?.name || findField(fields, ["locuzioni", "locuzione"], lookupTypes)?.name || "Locuzione",
-    locutionMeaning: overrides.locutionMeaning || findLookupFromLocutions(fields, schema, ["significato", "meaning"])?.name || findLocutionLookup(fields, true)?.name || findField(fields, ["significati locuzioni", "significato locuzioni", "significato locuzione"], lookupTypes)?.name || "Significato locuzione"
+    locution: overrides.locution || findField(fields, ["locuzioni"], lookupTypes)?.name || findLookupFromLocutions(fields, schema, ["locuzione"])?.name || findLocutionLookup(fields)?.name || "Locuzione",
+    locutionMeaning: overrides.locutionMeaning || findField(fields, ["significato_locuzione", "significato locuzione"], lookupTypes)?.name || findLookupFromLocutions(fields, schema, ["significato", "meaning"])?.name || findLocutionLookup(fields, true)?.name || "Significato locuzione"
   };
 }
 
