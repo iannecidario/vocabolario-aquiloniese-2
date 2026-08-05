@@ -87,6 +87,29 @@ h1 {
   font-weight: 650;
 }
 
+.search-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.locutions-button,
+.locutions-back {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--surface);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.locutions-button:hover,
+.locutions-back:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
 input,
 select {
   width: 100%;
@@ -188,6 +211,100 @@ button:focus-visible {
 
 .status.error {
   color: var(--danger);
+}
+
+.locutions-view[hidden],
+#dictionaryView[hidden] {
+  display: none;
+}
+
+.locutions-view {
+  padding-top: 24px;
+}
+
+.locutions-view__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.locutions-view__head h2 {
+  color: var(--accent);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+}
+
+.locutions-repertory {
+  display: grid;
+  gap: 30px;
+  width: min(820px, 100%);
+}
+
+.locutions-group {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 18px;
+}
+
+.locutions-group h3 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+
+.locutions-group__items {
+  display: grid;
+  gap: 16px;
+}
+
+.repertory-locution {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.repertory-locution {
+  cursor: pointer;
+}
+
+.repertory-locution__title,
+.repertory-locution__meaning {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.repertory-locution__title {
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.repertory-locution__meaning {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+button.repertory-locution:hover .repertory-locution__title,
+button.repertory-locution:focus-visible .repertory-locution__title {
+  color: var(--accent-strong);
+}
+
+button.repertory-locution:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 5px;
+  box-shadow: none;
 }
 
 .semantic-active {
@@ -503,9 +620,24 @@ button.tag:focus-visible,
     max-width: 128px;
   }
 
+  .search-actions,
   .search {
     width: 100%;
     text-align: left;
+  }
+
+  .locutions-view__head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .locutions-back {
+    width: 100%;
+  }
+
+  .locutions-group {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 10px;
   }
 
   h1 {
@@ -629,6 +761,7 @@ body.embed-mode .detail-card {
     font-size: 2.2rem;
   }
 
+  body.embed-mode .search-actions,
   body.embed-mode .search {
     width: 100%;
   }

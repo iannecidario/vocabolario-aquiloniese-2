@@ -22,6 +22,12 @@ const detailExtra = document.querySelector("#detailExtra");
 const detailTags = document.querySelector("#detailTags");
 const detailPlay = document.querySelector("#detailPlay");
 const detailAudio = document.querySelector("#detailAudio");
+const dictionaryView = document.querySelector("#dictionaryView");
+const locutionsView = document.querySelector("#locutionsView");
+const openLocutions = document.querySelector("#openLocutions");
+const closeLocutions = document.querySelector("#closeLocutions");
+const locutionsStatus = document.querySelector("#locutionsStatus");
+const locutionsList = document.querySelector("#locutionsList");
 const embedParam = new URLSearchParams(window.location.search).get("embed");
 const isEmbedMode = embedParam === "true" || window.location.pathname.replace(/\/+$/, "") === "/embed";
 const resizeMessageType = "VOCABOLARIO_RESIZE";
@@ -66,6 +72,11 @@ let currentAudio = null;
 let visibleLimit = 96;
 let renderTimer = null;
 let activeLetter = "";
+let locutions = [];
+let locutionsLoaded = false;
+let locutionsPromise = null;
+let dictionaryScrollTop = 0;
+let detailReturnScroll = null;
 
 const initialVisibleLimit = 96;
 const visibleLimitStep = 96;
@@ -253,11 +264,17 @@ function closeDetail() {
   delete detailAudio.dataset.type;
   detailPlay.dataset.state = "idle";
   document.body.classList.remove("detail-open");
+  if (detailReturnScroll !== null) {
+    const scrollTop = detailReturnScroll;
+    detailReturnScroll = null;
+    window.requestAnimationFrame(() => window.scrollTo({ top: scrollTop, behavior: "instant" }));
+  }
   scheduleEmbedResize();
 }
 
-function openDetail(item) {
+function openDetail(item, options = {}) {
   if (currentAudio) currentAudio.pause();
+  detailReturnScroll = Number.isFinite(options.returnScroll) ? options.returnScroll : null;
 
   detailWord.textContent = item.word || "Senza parola";
   setElementText(detailPhonetic, item.phonetic);
@@ -316,6 +333,118 @@ function openDetail(item) {
 
   detailOverlay.hidden = false;
   document.body.classList.add("detail-open");
+  scheduleEmbedResize();
+}
+
+function locutionInitial(value) {
+  return normalizeText(value).charAt(0).toUpperCase();
+}
+
+function sortLocutions(items) {
+  return [...items].sort((a, b) => clean(a.locution).localeCompare(clean(b.locution), "it", { sensitivity: "base" }));
+}
+
+function setLocutionsStatus(message, isError = false) {
+  locutionsStatus.textContent = message;
+  locutionsStatus.classList.toggle("error", isError);
+  locutionsStatus.hidden = !message;
+  scheduleEmbedResize();
+}
+
+function makeRepertoryEntry(item, vocabularyById) {
+  const linkedLemma = (item.lemmaIds || []).map((id) => vocabularyById.get(id)).find(Boolean);
+  const entry = document.createElement(linkedLemma ? "button" : "div");
+  entry.className = "repertory-locution";
+
+  if (linkedLemma) {
+    entry.type = "button";
+    entry.setAttribute("aria-label", `${item.locution}. Apri il lemma ${linkedLemma.word}`);
+    entry.addEventListener("click", () => {
+      openDetail(linkedLemma, { returnScroll: window.scrollY });
+    });
+  }
+
+  const title = document.createElement("p");
+  title.className = "repertory-locution__title";
+  title.textContent = item.locution;
+  entry.append(title);
+
+  if (clean(item.meaning)) {
+    const meaning = document.createElement("p");
+    meaning.className = "repertory-locution__meaning";
+    meaning.textContent = item.meaning;
+    entry.append(meaning);
+  }
+
+  return entry;
+}
+
+function renderLocutions() {
+  const vocabularyById = new Map(vocabulary.map((item) => [item.id, item]));
+  const groups = new Map();
+  sortLocutions(locutions).forEach((item) => {
+    const initial = locutionInitial(item.locution);
+    if (!initial) return;
+    if (!groups.has(initial)) groups.set(initial, []);
+    groups.get(initial).push(item);
+  });
+
+  const fragment = document.createDocumentFragment();
+  groups.forEach((items, letter) => {
+    const group = document.createElement("section");
+    group.className = "locutions-group";
+    group.setAttribute("aria-labelledby", `locutions-letter-${letter}`);
+    const heading = document.createElement("h3");
+    heading.id = `locutions-letter-${letter}`;
+    heading.textContent = letter;
+    const entries = document.createElement("div");
+    entries.className = "locutions-group__items";
+    items.forEach((item) => entries.append(makeRepertoryEntry(item, vocabularyById)));
+    group.append(heading, entries);
+    fragment.append(group);
+  });
+
+  locutionsList.replaceChildren(fragment);
+  setLocutionsStatus(locutions.length ? `${locutions.length} locuzioni` : "Nessuna locuzione disponibile.");
+  scheduleEmbedResize();
+}
+
+async function loadLocutions() {
+  if (locutionsLoaded) return renderLocutions();
+  if (locutionsPromise) return locutionsPromise;
+
+  setLocutionsStatus("Caricamento delle locuzioni...");
+  locutionsPromise = fetch("/api/locutions")
+    .then(async (response) => {
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Errore di caricamento delle locuzioni.");
+      locutions = payload.items || [];
+      locutionsLoaded = true;
+      renderLocutions();
+    })
+    .catch((error) => setLocutionsStatus(error.message, true))
+    .finally(() => {
+      locutionsPromise = null;
+    });
+
+  return locutionsPromise;
+}
+
+function showLocutionsView() {
+  dictionaryScrollTop = window.scrollY;
+  dictionaryView.hidden = true;
+  locutionsView.hidden = false;
+  openLocutions.setAttribute("aria-pressed", "true");
+  window.scrollTo({ top: 0, behavior: "instant" });
+  loadLocutions();
+  scheduleEmbedResize();
+}
+
+function showDictionaryView() {
+  locutionsView.hidden = true;
+  dictionaryView.hidden = false;
+  openLocutions.setAttribute("aria-pressed", "false");
+  window.requestAnimationFrame(() => window.scrollTo({ top: dictionaryScrollTop, behavior: "instant" }));
   scheduleEmbedResize();
 }
 
@@ -496,6 +625,8 @@ loadMore.addEventListener("click", () => {
 });
 
 detailClose.addEventListener("click", closeDetail);
+openLocutions.addEventListener("click", showLocutionsView);
+closeLocutions.addEventListener("click", showDictionaryView);
 
 detailOverlay.addEventListener("click", (event) => {
   if (event.target === detailOverlay) closeDetail();
