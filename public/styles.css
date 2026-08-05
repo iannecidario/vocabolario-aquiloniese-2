@@ -290,6 +290,10 @@ button.repertory-locution {
   line-height: 1.35;
 }
 
+.repertory-locution:not(button) .repertory-locution__title {
+  color: #686868;
+}
+
 .repertory-locution__meaning {
   color: var(--muted);
   font-size: 0.92rem;
