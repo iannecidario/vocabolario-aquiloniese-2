@@ -4,6 +4,9 @@ const cacheTtlMs = 10 * 60 * 1000;
 let vocabularyCache = null;
 let vocabularyCacheExpiresAt = 0;
 let vocabularyCachePromise = null;
+let locutionsCache = null;
+let locutionsCacheExpiresAt = 0;
+let locutionsCachePromise = null;
 
 function readEnv(env) {
   return {
@@ -370,4 +373,76 @@ async function fetchVocabularyFromAirtable(env) {
     items: records.map((record) => normalizeRecord(record, resolvedConfig.fieldMap, linkedLookups)).filter((item) => item.word || item.audio.length),
     config: resolvedConfig
   };
+}
+
+function pickLocutionsTable(tables) {
+  return tables.find((table) => normalizeName(table.name) === "locuzioni") ||
+    tables.find((table) => normalizeName(table.name).includes("locuzion"));
+}
+
+function inferLocutionsFieldMap(table) {
+  const fields = table.fields || [];
+  const textTypes = ["singleLineText", "multilineText", "richText", "formula"];
+  return {
+    locution: findField(fields, ["locuzioni e modi di dire", "locuzione"], textTypes)?.name || fields[0]?.name,
+    meaning: findField(fields, ["significato", "meaning", "definizione"], textTypes)?.name || "Significato",
+    lemmas: findField(fields, ["lemmi", "lemma"], ["multipleRecordLinks"])?.name || "Lemmi"
+  };
+}
+
+async function fetchLocutionsFromAirtable(env) {
+  const config = readEnv(env);
+  if (!config.token || !config.baseId) {
+    const error = new Error("Configurazione Airtable incompleta: token o baseId mancante.");
+    error.status = 500;
+    throw error;
+  }
+
+  const schema = await fetchSchema(config);
+  const table = pickLocutionsTable(schema.tables || []);
+  if (!table) {
+    const error = new Error("Non ho trovato la tabella Locuzioni nella base Airtable.");
+    error.status = 404;
+    throw error;
+  }
+
+  const fieldMap = inferLocutionsFieldMap(table);
+  const records = await fetchRecords(config, table.id);
+  return {
+    items: records.map((record) => {
+      const fields = record.fields || {};
+      const lemmaIds = Array.isArray(fields[fieldMap.lemmas]) ? fields[fieldMap.lemmas] : [];
+      return {
+        id: record.id,
+        locution: fieldValueToText(fields[fieldMap.locution]),
+        meaning: fieldValueToText(fields[fieldMap.meaning]),
+        lemmaIds
+      };
+    }).filter((item) => cleanLocutionValue(item.locution)),
+    config: { tableName: table.name, fieldMap }
+  };
+}
+
+function cleanLocutionValue(value) {
+  return String(value || "").trim();
+}
+
+export async function fetchLocutions(env) {
+  const now = Date.now();
+  if (locutionsCache && now < locutionsCacheExpiresAt) {
+    return { ...locutionsCache, cached: true };
+  }
+  if (locutionsCachePromise) return locutionsCachePromise;
+
+  locutionsCachePromise = fetchLocutionsFromAirtable(env)
+    .then((payload) => {
+      locutionsCache = payload;
+      locutionsCacheExpiresAt = Date.now() + cacheTtlMs;
+      return { ...payload, cached: false };
+    })
+    .finally(() => {
+      locutionsCachePromise = null;
+    });
+
+  return locutionsCachePromise;
 }
