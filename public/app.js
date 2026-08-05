@@ -577,6 +577,7 @@ async function loadVocabulary() {
     fillSelect(semanticFilter, uniqueOptions(vocabulary, "semantic"));
     updateSemanticState();
     render();
+    if (locutionsLoaded) renderLocutions();
   } catch (error) {
     setStatus(error.message, true);
   }
