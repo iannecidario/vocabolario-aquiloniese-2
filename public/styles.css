@@ -15,6 +15,13 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -36,8 +43,32 @@ textarea {
 
 .app-shell {
   width: min(1180px, calc(100% - 32px));
+  max-width: calc(100% - 32px);
+  min-width: 0;
   margin: 0 auto;
   padding: 32px 0 48px;
+}
+
+.app-shell > *,
+.topbar > *,
+.search-actions,
+.search,
+#dictionaryView,
+.filters,
+.filters > *,
+.word-grid,
+.word-card,
+.word-card__head,
+.locutions-view,
+.locutions-repertory,
+.locutions-group,
+.locutions-group__items,
+.detail-card,
+.detail-card__head,
+.detail-extra,
+.detail-row {
+  max-width: 100%;
+  min-width: 0;
 }
 
 .topbar {
@@ -123,6 +154,8 @@ input,
 select,
 textarea {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
@@ -491,6 +524,8 @@ button.repertory-locution:focus-visible {
 }
 
 .semantic-active strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--accent);
 }
 
@@ -546,6 +581,7 @@ h2 {
 .definition,
 .english {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .phonetic {
@@ -725,6 +761,7 @@ button.tag:focus-visible,
   margin: 0;
   color: #28323f;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .locution-list {
@@ -767,8 +804,15 @@ button.tag:focus-visible,
 
 @media (max-width: 720px) {
   .app-shell {
-    width: min(100% - 24px, 1120px);
+    width: calc(100% - 24px);
+    max-width: calc(100% - 24px);
     padding-top: 24px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
   }
 
   .topbar,
@@ -810,6 +854,17 @@ button.tag:focus-visible,
   .suggestions-form input,
   .suggestions-form textarea {
     font-size: 16px;
+  }
+
+  .word-grid,
+  .detail-images {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .word-card,
+  .detail-card {
+    width: 100%;
+    max-width: 100%;
   }
 
   .suggestions-back,
