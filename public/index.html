@@ -66,6 +66,7 @@
             <input id="searchInput" type="search" placeholder="Lemma, italiano, inglese..." autocomplete="off" />
           </label>
           <button class="locutions-button" id="openLocutions" type="button">Locuzioni</button>
+          <button class="suggestions-button" id="openSuggestions" type="button">Proponi una parola</button>
         </div>
       </section>
 
@@ -110,6 +111,62 @@
         </header>
         <p class="status" id="locutionsStatus" role="status"></p>
         <div class="locutions-repertory" id="locutionsList"></div>
+      </section>
+
+      <section class="suggestions-view" id="suggestionsView" hidden aria-labelledby="suggestionsTitle">
+        <header class="suggestions-view__head">
+          <div>
+            <h2 id="suggestionsTitle">Suggerimenti</h2>
+            <p>
+              Conosci una parola o un'espressione del dialetto aquiloniese che non trovi nel Vocabolario?
+              Puoi segnalarcela compilando questo modulo. La proposta sarà verificata prima dell'eventuale
+              inserimento nel Vocabolario.
+            </p>
+            <p>Grazie per la partecipazione.</p>
+          </div>
+          <button class="suggestions-back" id="closeSuggestions" type="button">Vocabolario</button>
+        </header>
+
+        <form class="suggestions-form" id="suggestionsForm" novalidate>
+          <label>
+            <span>Parola suggerita <strong aria-hidden="true">*</strong></span>
+            <input id="suggestedWord" name="parolaSuggerita" type="text" maxlength="150" required autocomplete="off" />
+            <small>Inserisci una sola parola o espressione per ogni proposta.</small>
+          </label>
+          <label>
+            <span>Significato <em>facoltativo</em></span>
+            <textarea id="suggestedMeaning" name="significato" maxlength="1000" rows="4"></textarea>
+            <small>Se lo conosci, indica il significato in italiano.</small>
+          </label>
+          <label>
+            <span>Esempio d'uso <em>facoltativo</em></span>
+            <textarea id="suggestedExample" name="esempioUso" maxlength="1500" rows="5"></textarea>
+            <small>Se lo ricordi, scrivi una frase in dialetto in cui viene usata questa parola o espressione.</small>
+          </label>
+          <div class="suggestions-form__person">
+            <label>
+              <span>Nome <em>facoltativo</em></span>
+              <input id="suggestedName" name="nome" type="text" maxlength="100" autocomplete="given-name" />
+              <small>Se vuoi, inserisci il tuo nome.</small>
+            </label>
+            <label>
+              <span>Cognome <em>facoltativo</em></span>
+              <input id="suggestedSurname" name="cognome" type="text" maxlength="100" autocomplete="family-name" />
+              <small>Se vuoi, inserisci il tuo cognome.</small>
+            </label>
+          </div>
+          <div class="suggestions-honeypot" aria-hidden="true">
+            <label>Non compilare questo campo<input id="suggestedWebsite" name="website" type="text" tabindex="-1" autocomplete="off" /></label>
+          </div>
+          <p class="suggestions-message" id="suggestionsMessage" role="status" aria-live="polite"></p>
+          <button class="suggestions-submit" id="submitSuggestion" type="submit">Invia la proposta</button>
+        </form>
+
+        <section class="suggestions-success" id="suggestionsSuccess" hidden aria-live="polite">
+          <h3>Grazie per il tuo contributo.</h3>
+          <p>La proposta sarà verificata prima dell'eventuale inserimento nel Vocabolario Aquiloniese.</p>
+          <button id="suggestAnother" type="button">Proponi un'altra parola</button>
+        </section>
       </section>
     </main>
 

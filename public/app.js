@@ -28,6 +28,15 @@ const openLocutions = document.querySelector("#openLocutions");
 const closeLocutions = document.querySelector("#closeLocutions");
 const locutionsStatus = document.querySelector("#locutionsStatus");
 const locutionsList = document.querySelector("#locutionsList");
+const suggestionsView = document.querySelector("#suggestionsView");
+const openSuggestions = document.querySelector("#openSuggestions");
+const closeSuggestions = document.querySelector("#closeSuggestions");
+const suggestionsForm = document.querySelector("#suggestionsForm");
+const suggestionsMessage = document.querySelector("#suggestionsMessage");
+const suggestionsSuccess = document.querySelector("#suggestionsSuccess");
+const submitSuggestion = document.querySelector("#submitSuggestion");
+const suggestAnother = document.querySelector("#suggestAnother");
+const suggestedWord = document.querySelector("#suggestedWord");
 const embedParam = new URLSearchParams(window.location.search).get("embed");
 const isEmbedMode = embedParam === "true" || window.location.pathname.replace(/\/+$/, "") === "/embed";
 const resizeMessageType = "VOCABOLARIO_RESIZE";
@@ -77,6 +86,8 @@ let locutionsLoaded = false;
 let locutionsPromise = null;
 let dictionaryScrollTop = 0;
 let detailReturnScroll = null;
+let suggestionsScrollTop = 0;
+let suggestionFormStartedAt = Date.now();
 
 const initialVisibleLimit = 96;
 const visibleLimitStep = 96;
@@ -442,10 +453,92 @@ function showLocutionsView() {
 
 function showDictionaryView() {
   locutionsView.hidden = true;
+  suggestionsView.hidden = true;
   dictionaryView.hidden = false;
   openLocutions.setAttribute("aria-pressed", "false");
+  openSuggestions.setAttribute("aria-pressed", "false");
   window.requestAnimationFrame(() => window.scrollTo({ top: dictionaryScrollTop, behavior: "instant" }));
   scheduleEmbedResize();
+}
+
+function setSuggestionsMessage(message, isError = false) {
+  suggestionsMessage.textContent = message;
+  suggestionsMessage.classList.toggle("error", isError);
+  suggestionsMessage.hidden = !message;
+  scheduleEmbedResize();
+}
+
+function resetSuggestionForm() {
+  suggestionsForm.reset();
+  suggestionsForm.hidden = false;
+  suggestionsSuccess.hidden = true;
+  submitSuggestion.disabled = false;
+  submitSuggestion.textContent = "Invia la proposta";
+  suggestionFormStartedAt = Date.now();
+  setSuggestionsMessage("");
+  suggestedWord.focus();
+}
+
+function showSuggestionsView() {
+  suggestionsScrollTop = window.scrollY;
+  dictionaryView.hidden = true;
+  locutionsView.hidden = true;
+  suggestionsView.hidden = false;
+  openLocutions.setAttribute("aria-pressed", "false");
+  openSuggestions.setAttribute("aria-pressed", "true");
+  suggestionFormStartedAt = Date.now();
+  window.scrollTo({ top: 0, behavior: "instant" });
+  window.requestAnimationFrame(() => suggestedWord.focus());
+  scheduleEmbedResize();
+}
+
+function closeSuggestionsView() {
+  suggestionsView.hidden = true;
+  dictionaryView.hidden = false;
+  openSuggestions.setAttribute("aria-pressed", "false");
+  window.requestAnimationFrame(() => window.scrollTo({ top: suggestionsScrollTop, behavior: "instant" }));
+  scheduleEmbedResize();
+}
+
+async function sendSuggestion(event) {
+  event.preventDefault();
+  setSuggestionsMessage("");
+
+  if (!suggestionsForm.reportValidity()) return;
+
+  const form = new FormData(suggestionsForm);
+  const payload = {
+    parolaSuggerita: clean(form.get("parolaSuggerita")),
+    significato: clean(form.get("significato")),
+    esempioUso: clean(form.get("esempioUso")),
+    cognome: clean(form.get("cognome")),
+    nome: clean(form.get("nome")),
+    website: clean(form.get("website")),
+    formStartedAt: suggestionFormStartedAt
+  };
+
+  submitSuggestion.disabled = true;
+  submitSuggestion.textContent = "Invio in corso...";
+
+  try {
+    const response = await fetch("/api/suggestions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Non è stato possibile inviare la proposta. Riprova.");
+
+    suggestionsForm.hidden = true;
+    suggestionsSuccess.hidden = false;
+    suggestionsSuccess.focus?.();
+  } catch (error) {
+    setSuggestionsMessage(error.message || "Non è stato possibile inviare la proposta. Riprova.", true);
+  } finally {
+    submitSuggestion.disabled = false;
+    submitSuggestion.textContent = "Invia la proposta";
+    scheduleEmbedResize();
+  }
 }
 
 function playAudio(audio, play, source) {
@@ -628,6 +721,10 @@ loadMore.addEventListener("click", () => {
 detailClose.addEventListener("click", closeDetail);
 openLocutions.addEventListener("click", showLocutionsView);
 closeLocutions.addEventListener("click", showDictionaryView);
+openSuggestions.addEventListener("click", showSuggestionsView);
+closeSuggestions.addEventListener("click", closeSuggestionsView);
+suggestionsForm.addEventListener("submit", sendSuggestion);
+suggestAnother.addEventListener("click", resetSuggestionForm);
 
 detailOverlay.addEventListener("click", (event) => {
   if (event.target === detailOverlay) closeDetail();
