@@ -232,6 +232,8 @@ button:focus-visible {
 
 .suggestions-view {
   width: min(820px, 100%);
+  max-width: 100%;
+  min-width: 0;
   padding-top: 24px;
 }
 
@@ -258,6 +260,9 @@ button:focus-visible {
 .suggestions-form {
   display: grid;
   gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding-top: 24px;
 }
 
@@ -269,9 +274,18 @@ button:focus-visible {
 .suggestions-form label {
   display: grid;
   gap: 7px;
+  max-width: 100%;
+  min-width: 0;
   color: var(--muted);
   font-size: 0.92rem;
   font-weight: 700;
+}
+
+.suggestions-form input,
+.suggestions-form textarea {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .suggestions-form label strong {
@@ -305,10 +319,12 @@ button:focus-visible {
 
 .suggestions-honeypot {
   position: absolute;
-  left: -10000px;
+  left: 0;
   width: 1px;
   height: 1px;
   overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .suggestions-message {
@@ -783,6 +799,17 @@ button.tag:focus-visible,
   .suggestions-view__head,
   .suggestions-form__person {
     grid-template-columns: 1fr;
+  }
+
+  .suggestions-view {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .suggestions-form input,
+  .suggestions-form textarea {
+    font-size: 16px;
   }
 
   .suggestions-back,
