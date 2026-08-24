@@ -127,7 +127,13 @@ export async function onRequest(context) {
     });
 
     if (!response.ok) {
-      console.error("Creazione suggerimento Airtable non riuscita:", response.status);
+      const airtableError = await response.json().catch(() => ({}));
+      console.error(
+        "Creazione suggerimento Airtable non riuscita:",
+        response.status,
+        airtableError?.error?.type || "errore-sconosciuto",
+        airtableError?.error?.message || "nessun dettaglio"
+      );
       return json({ error: "Non è stato possibile inviare la proposta. Riprova più tardi." }, 502);
     }
 
